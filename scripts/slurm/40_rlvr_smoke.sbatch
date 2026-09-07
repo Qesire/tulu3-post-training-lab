@@ -41,14 +41,10 @@ PY
 trap on_exit EXIT
 
 [[ -x "$PYTHON_BIN" ]] || { echo "POSTTRAIN_PYTHON_MISSING=$PYTHON_BIN" >&2; exit 40; }
-EXPECTED_COMMIT="8fcf9c6bae3e3a58e1fcb8c79c3bbfbd97065377"
-ACTUAL_COMMIT="$(git -C "$OPEN_INSTRUCT_ROOT" rev-parse HEAD)"
-[[ "$ACTUAL_COMMIT" == "$EXPECTED_COMMIT" ]] || {
-  echo "OPEN_INSTRUCT_COMMIT_MISMATCH expected=$EXPECTED_COMMIT actual=$ACTUAL_COMMIT" >&2; exit 40;
-}
-[[ -z "$(git -C "$OPEN_INSTRUCT_ROOT" status --porcelain)" ]] || {
-  echo "OPEN_INSTRUCT_DIRTY_WORKTREE=$OPEN_INSTRUCT_ROOT" >&2; exit 40;
-}
+"$PYTHON_BIN" "$REPO_ROOT/scripts/preflight/validate_open_instruct_checkout.py" \
+  "$OPEN_INSTRUCT_ROOT" \
+  --expected-commit 8fcf9c6bae3e3a58e1fcb8c79c3bbfbd97065377 \
+  --output "$RUN_ROOT/audit/open_instruct_checkout.json"
 
 export TMPDIR="$RUN_ROOT/tmp"
 export TRITON_CACHE_DIR="$RUN_ROOT/tmp/triton"
