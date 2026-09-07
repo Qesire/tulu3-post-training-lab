@@ -1,0 +1,31 @@
+schema_version: 1
+stage: rlvr
+profile: resource_probe_5090
+status: pre_execution_only
+reference: configs/rlvr/reference_tulu3_8b_ppo.yaml
+
+lineage:
+  input_stage: dpo
+  input_checkpoint: null
+
+dataset:
+  hf_id: allenai/RLVR-GSM-MATH-IF-Mixed-Constraints
+  local_path: null
+
+checks:
+  require_legacy_reference_source: true
+  require_qwen_compatible_value_model_binding: true
+  require_local_dataset: true
+  require_ray: true
+  require_vllm: true
+  require_flash_attn: true
+  require_cuda: true
+  record_visible_gpu_count: true
+  record_per_gpu_vram: true
+
+blocked_until:
+  - qwen_compatible_value_model_binding
+  - actor_and_vllm_topology_pilot
+  - memory_pilot
+
+claim_limit: resource_closure_only_no_training
