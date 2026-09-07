@@ -19,12 +19,15 @@ MODEL_STAGE="${MODEL_STAGE:-unknown}"
 PYTHON_BIN="${PYTHON_BIN:-$OLMES_ROOT/.venv/bin/python}"
 RUN_BASE="${RUN_BASE:-$REPO_ROOT/runs}"
 RUN_ROOT="$RUN_BASE/eval_${MODEL_STAGE}_${SLURM_JOB_ID}"
-mkdir -p "$RUN_ROOT"/{audit,config,logs,results,scheduler}
+TRITON_CACHE_DIR="${TRITON_CACHE_DIR:-/tmp/tulu3_olmes_triton_${USER}_${SLURM_JOB_ID}}"
+mkdir -p "$RUN_ROOT"/{audit,config,logs,results,scheduler} "$TRITON_CACHE_DIR"
+export TRITON_CACHE_DIR
 
 exec > >(tee "$RUN_ROOT/logs/eval.out") 2> >(tee "$RUN_ROOT/logs/eval.err" >&2)
 
 on_exit() {
   rc=$?
+  rm -rf "$TRITON_CACHE_DIR" || true
   python3 - "$RUN_ROOT" "$rc" <<'PY'
 import json, sys
 from datetime import datetime, timezone
@@ -46,10 +49,6 @@ ACTUAL_COMMIT="$(git -C "$OLMES_ROOT" rev-parse HEAD)"
 [[ "$ACTUAL_COMMIT" == "$EXPECTED_COMMIT" ]] || {
   echo "OLMES_COMMIT_MISMATCH expected=$EXPECTED_COMMIT actual=$ACTUAL_COMMIT" >&2; exit 40;
 }
-
-export TRITON_CACHE_DIR="${TRITON_CACHE_DIR:-/tmp/tulu3_olmes_triton_${USER}_${SLURM_JOB_ID}}"
-mkdir -p "$TRITON_CACHE_DIR"
-trap 'rc=$?; rm -rf "$TRITON_CACHE_DIR"; on_exit; exit $rc' EXIT
 
 export RUNTIME_PROBE_OUT="$RUN_ROOT/audit/runtime.json"
 "$PYTHON_BIN" "$REPO_ROOT/scripts/preflight/runtime_probe.py"
