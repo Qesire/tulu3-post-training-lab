@@ -26,8 +26,11 @@ jobs:
       - name: Shell syntax
         run: |
           bash -n scripts/setup/bootstrap_open_instruct.sh
+          bash -n scripts/setup/bootstrap_olmes.sh
           bash -n scripts/train/sft_lecture6.sh
           bash -n scripts/train/dpo_lecture6.sh
+          bash -n scripts/eval/olmes_lecture6.sh
           bash -n scripts/slurm/00_runtime_preflight.sbatch
           bash -n scripts/slurm/10_sft_smoke.sbatch
           bash -n scripts/slurm/20_dpo_smoke.sbatch
+          bash -n scripts/slurm/30_eval_smoke.sbatch
