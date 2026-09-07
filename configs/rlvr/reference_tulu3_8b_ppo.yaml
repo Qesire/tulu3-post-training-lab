@@ -1,0 +1,81 @@
+schema_version: 1
+stage: rlvr
+profile: original_tulu3_8b_ppo_reproduction
+status: upstream_reference_closed_qwen_adaptation_open
+
+source:
+  documentation_repository: allenai/open-instruct
+  documentation_commit: 8fcf9c6bae3e3a58e1fcb8c79c3bbfbd97065377
+  documentation_path: docs/tulu3.md
+  algorithm: ppo
+  legacy_entrypoint: open_instruct/ppo_vllm_thread_ray_gtrl.py
+  legacy_code_commit: 745bf58d321cf63a836167d7f9d333a9fe5a27ab
+  removal_commit: bac9393104e4622ea3735d2f201b3c79e5b69c2d
+  removal_reason: legacy PPO/GRPO implementation removed upstream on 2025-11-03
+
+lineage:
+  upstream_reference_input: allenai/Llama-3.1-Tulu-3-8B-DPO
+  project_input_stage: dpo
+  project_input_checkpoint: null
+
+reward_value_model:
+  upstream_reference_path: allenai/Llama-3.1-Tulu-3-8B-RM
+  reward_model_multiplier: 0.0
+  role_note: >-
+    In the legacy PPO implementation reward_model_path is still used to initialize
+    the trainable value model even when reward_model_multiplier is zero. The
+    separate scalar reward-model inference branch is skipped at multiplier zero.
+  qwen_compatible_value_initialization: null
+
+verifier:
+  apply_verifiable_reward: true
+  instruction_following_reproduction: IFEvalVerifierOld
+  note: >-
+    The pinned Tulu3 reproduction documentation explicitly requires
+    IFEvalVerifierOld for the old IF data format; the newer verifier is not
+    reproduction-compatible with that data format.
+
+dataset:
+  hf_id: allenai/RLVR-GSM-MATH-IF-Mixed-Constraints
+  weight: 1.0
+  split: train
+  eval_weight_or_count: 16
+  eval_split: train
+  local_path: null
+  revision: null
+
+reference_training:
+  max_token_length: 2048
+  max_prompt_token_length: 2048
+  response_length: 2048
+  non_stop_penalty: true
+  stop_token: eos
+  temperature: 1.0
+  learning_rate: 3.0e-7
+  total_episodes: 10000000
+  penalty_reward_value: -10.0
+  deepspeed_stage: 3
+  per_device_train_batch_size: 2
+  local_rollout_forward_batch_size: 2
+  local_mini_batch_size: 32
+  local_rollout_batch_size: 32
+  actor_num_gpus_per_node: [7]
+  vllm_tensor_parallel_size: 1
+  beta: 0.05
+  output_dir: output/rlvr_8b
+  seed: 3
+  num_evals: 3
+  save_freq: 100
+  reward_model_multiplier: 0.0
+  gradient_checkpointing: true
+  with_tracking: true
+
+qwen_adaptation_open_fields:
+  - value_model_initialization_compatible_with_qwen2_5_vocab_and_architecture
+  - minimum_5090_actor_gpu_count
+  - vllm_engine_gpu_topology
+  - effective_batch_preservation
+  - legacy_code_checkout_or_forward_port_strategy
+  - memory_feasibility
+
+claim_limit: original_tulu3_reference_only_until_qwen_rlvr_pilot
