@@ -1,0 +1,20 @@
+schema_version: 1
+datasets:
+  sft:
+    hf_id: allenai/tulu-3-sft-mixture
+    tutorial_expected_samples: 939000
+    local_path: null
+    revision: null
+    fingerprint: null
+  dpo:
+    hf_id: allenai/llama-3.1-tulu-3-8b-preference-mixture
+    tutorial_expected_samples: 273000
+    local_path: null
+    revision: null
+    fingerprint: null
+  rlvr:
+    hf_id: allenai/RLVR-GSM-MATH-IF-Mixed-Constraints
+    tutorial_expected_samples: 30000
+    local_path: null
+    revision: null
+    fingerprint: null

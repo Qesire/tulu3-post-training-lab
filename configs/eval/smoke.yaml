@@ -1,0 +1,12 @@
+schema_version: 1
+stage: evaluation
+profile: smoke
+framework: olmes
+model: null
+model_type: vllm
+tasks:
+  - mmlu::olmes
+  - gsm8k::olmes
+batch_size: null
+max_model_length: 8192
+purpose: compare_base_sft_dpo_rlvr_lineage

@@ -1,0 +1,25 @@
+schema_version: 1
+status: historical_known_good_plus_lecture6_target
+cluster:
+  partition: P107-RTX5090
+  account: competition
+  qos: qos_p107-rtx5090
+  gpu_family: NVIDIA GeForce RTX 5090
+  vram_mib_observed: 32607
+historical_known_good:
+  python: "3.11"
+  torch: "2.7.0+cu126"
+  flash_attn: "2.8.3"
+  transformers: "4.57.0"
+  peft: "0.15.2"
+  bitsandbytes: "0.46.1"
+lecture6_open_instruct_target:
+  python: "3.12"
+  torch: ">=2.8.0,<2.9"
+  transformers: ">=4.57.0"
+  flash_attn: ">=2.8.3"
+  vllm: "==0.11.0"
+notes:
+  - Qwen2.5-3B and FlashAttention 2.8.3 have already been exercised on this 5090 cluster.
+  - The lecture-era Open-Instruct pin requires Python 3.12 and Torch 2.8.x, so the old hif4 env is evidence, not the target training env.
+  - Do not mutate hif4; build a dedicated Open-Instruct environment.

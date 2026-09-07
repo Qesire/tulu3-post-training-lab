@@ -1,0 +1,9 @@
+schema_version: 1
+model_id: qwen2.5-3b-base
+hf_id: Qwen/Qwen2.5-3B
+role: base
+architecture: causal_lm
+cluster_path: /home/scc/pb23061276/projects/wan-quant/models/LLM/Qwen2.5-3B
+trust_remote_code: true
+revision: null   # freeze after local-asset attestation
+sha256_manifest: null

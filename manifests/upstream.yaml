@@ -1,0 +1,28 @@
+schema_version: 1
+frozen_at: 2026-09-07
+basis: lecture6_era
+upstreams:
+  open_instruct:
+    repository: allenai/open-instruct
+    commit: 8fcf9c6bae3e3a58e1fcb8c79c3bbfbd97065377
+    commit_date_utc: 2025-11-14T23:29:09Z
+    rationale: latest upstream commit on the tutorial's stated 2025-11-14 reference date
+    python_requirement: "==3.12.*"
+    observed_core_requirements:
+      torch: ">=2.8.0,<2.9"
+      transformers: ">=4.57.0"
+      flash_attn: ">=2.8.3"
+      vllm: "==0.11.0"
+      deepspeed: "<0.17.3"
+      wandb: "==0.18.1"
+  olmes:
+    repository: allenai/olmes
+    commit: f122a7bad99551ffb3f5feec14169af794926f6b
+    commit_date_utc: 2025-11-20T09:20:38Z
+    rationale: latest OLMES commit available before the tutorial's 2025-12-08 GPU-eval note
+
+policy:
+  mutate_upstream_in_place: false
+  record_all_patches: true
+  gpu_jobs_may_git_pull: false
+  formal_jobs_require_pinned_checkout: true

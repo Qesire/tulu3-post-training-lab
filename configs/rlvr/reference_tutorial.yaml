@@ -1,0 +1,31 @@
+schema_version: 1
+stage: rlvr
+profile: lecture6_reference
+status: method_open
+
+lineage:
+  intended_input_stage: dpo
+  input_checkpoint: null
+
+dataset:
+  hf_id: allenai/RLVR-GSM-MATH-IF-Mixed-Constraints
+  local_path: null
+  revision: null
+
+known_from_tutorial:
+  purpose: reinforcement_learning_with_verifiable_rewards
+
+method_open_fields:
+  - algorithm
+  - rollout_backend
+  - verifier_contract
+  - reward_definition
+  - kl_or_beta
+  - sampling_temperature
+  - num_generations
+  - rollout_batch_size
+  - update_batch_size
+  - advantage_estimator
+  - optimizer_hyperparameters
+
+claim_limit: dataset_and_stage_identity_only

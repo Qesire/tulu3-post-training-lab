@@ -1,0 +1,30 @@
+schema_version: 1
+stage: sft
+profile: smoke_5090
+status: executable_after_runtime_preflight
+purpose: integration_smoke_only
+inherits_scientific_source: configs/sft/reference_lecture6.yaml
+
+model:
+  config: configs/model/qwen2.5-3b.yaml
+
+dataset:
+  hf_id: allenai/tulu-3-sft-mixture
+  local_path: null
+  max_samples: 32
+
+training:
+  precision: bf16
+  max_seq_length: 1024
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 1
+  learning_rate: 2.0e-5
+  max_steps: 2
+  gradient_checkpointing: true
+  use_flash_attn: true
+  seed: 42
+
+output:
+  save_checkpoint: false
+
+claim_limit: runtime_path_only

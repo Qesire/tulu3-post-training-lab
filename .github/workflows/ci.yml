@@ -1,0 +1,31 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install project tooling
+        run: pip install -e . pytest
+      - name: Validate contracts
+        run: pytest -q
+      - name: Python syntax
+        run: |
+          python -m py_compile scripts/setup/apply_lecture6_open_instruct_patch.py
+          python -m py_compile scripts/data/download_tulu3_datasets.py
+          python -m py_compile scripts/preflight/runtime_probe.py
+          python -m py_compile scripts/preflight/validate_model_asset.py
+          python -m py_compile scripts/preflight/validate_dataset_asset.py
+      - name: Shell syntax
+        run: |
+          bash -n scripts/setup/bootstrap_open_instruct.sh
+          bash -n scripts/train/sft_lecture6.sh
+          bash -n scripts/slurm/00_runtime_preflight.sbatch
+          bash -n scripts/slurm/10_sft_smoke.sbatch

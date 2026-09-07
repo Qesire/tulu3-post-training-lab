@@ -1,0 +1,33 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+.env
+*.egg-info/
+
+# local assets / caches
+data/
+models/
+outputs/
+runs/
+workspace/
+wandb/
+.cache/
+
+# training artifacts
+checkpoints/
+eval_results/
+*.safetensors
+*.pt
+*.bin
+
+# scheduler logs
+slurm-*.out
+slurm-*.err
+logs/
+
+# editor / OS
+.vscode/
+.idea/
+.DS_Store
