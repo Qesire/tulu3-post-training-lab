@@ -66,6 +66,24 @@ RLVR (RLVR GSM/MATH/IF mixed constraints)
 
 The tutorial runs 4 processes, so its nominal effective batch size is `4 × 1 × 8 = 32`.
 
+### Lecture-era Tulu3 DPO reference
+
+The supplied tutorial names the DPO dataset but does not give a complete DPO command. The repository therefore records the exact Tulu3 8B DPO script from the pinned lecture-era Open-Instruct revision as **reference authority**, not as an already-validated Qwen2.5-3B formal recipe:
+
+```text
+max_seq_length=2048
+batch/device=1
+grad_accum=16
+lr=5e-7
+warmup=0.1
+epochs=1
+dpo_loss_type=dpo_norm
+dpo_beta=5
+seed=8
+```
+
+The project adaptation changes the lineage input to this project's SFT checkpoint. A 2-step DPO smoke exists to test that path; formal Qwen hyperparameters remain pilot-gated.
+
 ## 3. Slurm target
 
 Known cluster target:
@@ -120,15 +138,17 @@ Smoke results must not be interpreted as scientific results.
 - [x] Runtime probe
 - [x] Dataset download/materialization utility
 - [x] Static CI
-- [ ] Freeze local dataset revisions/digests
 - [x] Lecture-era Open-Instruct/OLMES revision policy
 - [x] Dedicated Open-Instruct bootstrap + explicit Lecture-6 W&B patch
 - [x] Offline-compatible local Parquet dataset binding
 - [x] Executable 2-step SFT smoke launcher
+- [x] Exact lecture-era Tulu3 DPO reference config
+- [x] SFT-checkpoint-bound 2-step DPO smoke launcher
 - [ ] Materialize/freeze dataset revisions and SHA256 on cluster
 - [ ] Validate dedicated Python 3.12/Open-Instruct environment on 5090
 - [ ] Run SFT smoke
-- [ ] Adapt/freeze DPO for Qwen2.5-3B lineage
+- [ ] Run DPO smoke after an SFT checkpoint exists
+- [ ] Freeze Qwen2.5-3B formal DPO after resource/method pilot
 - [ ] Freeze canonical RLVR algorithm/config
 - [ ] Run formal stage evaluations
 
@@ -142,7 +162,7 @@ sbatch scripts/slurm/00_runtime_preflight.sbatch
 
 Then inspect the generated `runtime.json` before enabling training.
 
-## 9. Preparation sequence
+## 9. Preparation and smoke sequence
 
 On a network-enabled preparation/login node:
 
@@ -155,10 +175,18 @@ $OPEN_INSTRUCT_ROOT/.venv/bin/python scripts/data/download_tulu3_datasets.py \
 
 The materializer writes `sft.parquet`, `dpo.parquet`, `rlvr.parquet` plus a manifest containing the resolved Hugging Face revision and SHA256. The use of Parquet is intentional: the pinned Lecture-6 Open-Instruct directly recognizes local `.parquet`/`.jsonl` dataset paths.
 
-Then submit runtime preflight and, only after it passes, the SFT smoke:
+Then submit runtime preflight and SFT smoke:
 
 ```bash
 sbatch scripts/slurm/00_runtime_preflight.sbatch
 SFT_DATASET_FILE=/home/scc/pb23061276/projects/tulu3-data/sft.parquet \
   sbatch scripts/slurm/10_sft_smoke.sbatch
+```
+
+After a concrete SFT model output is available, DPO smoke is explicitly lineage-bound:
+
+```bash
+SFT_CHECKPOINT_DIR=/absolute/path/to/sft/output \
+DPO_DATASET_FILE=/home/scc/pb23061276/projects/tulu3-data/dpo.parquet \
+  sbatch scripts/slurm/20_dpo_smoke.sbatch
 ```
