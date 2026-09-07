@@ -1,0 +1,83 @@
+schema_version: 1
+stage: rlvr
+profile: qwen2.5_3b_5090_smoke
+status: executable_after_dpo_checkpoint_and_rlvr_asset_closure
+
+lineage:
+  input_stage: dpo
+  input_checkpoint_env: DPO_CHECKPOINT_DIR
+
+source_authority:
+  canonical_reference: configs/rlvr/reference_tulu3_8b_grpo.yaml
+  single_gpu_debug_source:
+    repository: allenai/open-instruct
+    commit: 8fcf9c6bae3e3a58e1fcb8c79c3bbfbd97065377
+    script: scripts/train/debug/grpo_fast.sh
+    significance: proves grpo_fast single_gpu_mode is an upstream-supported debug path
+
+method:
+  algorithm: grpo
+  entrypoint: open_instruct/grpo_fast.py
+  apply_verifiable_reward: true
+  beta: 0.01
+  kl_estimator: kl3
+  learning_rate: 5.0e-7
+  temperature: 1.0
+  seed: 1
+
+dataset:
+  hf_id: allenai/RLVR-GSM-MATH-IF-Mixed-Constraints
+  local_file_env: RLVR_DATASET_FILE
+  train_sample_count: 8
+  eval_sample_count: 4
+
+smoke_shape:
+  max_prompt_token_length: 256
+  response_length: 256
+  pack_length: 512
+  per_device_train_batch_size: 1
+  num_unique_prompts_rollout: 2
+  num_samples_per_prompt_rollout: 2
+  total_episodes: 8
+  expected_training_steps: 2
+  num_epochs: 1
+  num_learners_per_node: [1]
+  vllm_num_engines: 1
+  vllm_tensor_parallel_size: 1
+  single_gpu_mode: true
+  vllm_sync_backend: gloo
+  vllm_gpu_memory_utilization: 0.25
+  vllm_enforce_eager: true
+  deepspeed_stage: 2
+  deepspeed_offload_param: true
+  deepspeed_offload_optimizer: true
+  gradient_checkpointing: true
+  async_steps: 0
+  local_eval_every: -1
+  gather_whole_model: false
+
+adaptation_policy:
+  preserved_from_canonical_reference:
+    - dpo_input_stage
+    - grpo_algorithm_family
+    - verifiable_reward
+    - beta_0_01
+    - kl3
+    - learning_rate_5e_7
+    - temperature_1_0
+    - seed_1
+  smoke_only_resource_changes:
+    - bounded_local_dataset
+    - shorter_prompt_and_response_lengths
+    - two_by_two_rollout_shape
+    - two_training_steps
+    - single_gpu_collocation
+    - lower_vllm_memory_fraction
+    - deepspeed_cpu_parameter_and_optimizer_offload
+    - no_in_loop_eval
+
+claim_limit: runtime_path_only
+formal_promotion_requires:
+  - successful_5090_smoke
+  - memory_and_walltime_pilot
+  - explicit_freeze_of_qwen2.5_3b_rollout_and_update_batching
