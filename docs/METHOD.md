@@ -35,8 +35,42 @@ Tutorial-defined. The reference configuration is `configs/sft/reference_lecture6
 
 ### DPO
 
-Dataset identity is tutorial-defined. A canonical Tulu3 8B reference configuration is recorded, but Qwen2.5-3B adaptation remains open.
+Dataset identity is tutorial-defined. The exact lecture-era Tulu3 8B DPO script is frozen as upstream-reference authority. The project changes the lineage input to this project's SFT checkpoint. Qwen2.5-3B formal resource/hyperparameter choices remain pilot-gated.
 
 ### RLVR
 
-Dataset identity and stage purpose are tutorial-defined. The supplied tutorial does not specify the exact RL algorithm or training hyperparameters; these remain open until frozen from an authoritative implementation/source.
+The supplied tutorial identifies the RLVR stage and `allenai/RLVR-GSM-MATH-IF-Mixed-Constraints`, but it does not contain a complete RL trainer command or exact algorithm choice.
+
+That tutorial gap is now closed by the pinned lecture-era Open-Instruct source rather than by inference. At commit `8fcf9c6b...`, `scripts/train/tulu3/grpo_8b.sh` uses the exact tutorial RLVR dataset, starts from the Tulu3 DPO model, runs GRPO, enables verifiable reward, and fixes the reference values recorded in `configs/rlvr/reference_tulu3_8b_grpo.yaml`.
+
+The canonical upstream reference includes, among other values:
+
+```text
+algorithm                GRPO
+input stage              DPO
+beta                     0.01
+KL estimator             kl3
+learning rate            5e-7
+samples / prompt         16
+temperature              1.0
+max prompt length        2048
+response length          2048
+total episodes           2,000,000
+DeepSpeed stage          2
+seed                     1
+verifiable reward        enabled
+reward-model multiplier  0.0
+```
+
+This establishes the **algorithmic authority**, but not the final 1×RTX5090 training shape. The historical Tulu3 run is multi-node/multi-GPU and uses Llama-3.1-Tulu-3-8B-DPO.
+
+For integration testing only, `configs/rlvr/smoke_5090.yaml` and `scripts/train/rlvr_lecture6.sh` adapt the same method to a bounded Qwen2.5-3B DPO checkpoint using the pinned `grpo_fast.py` single-GPU debug path. The smoke preserves GRPO/verifiable-reward/beta/KL/LR/temperature/seed semantics while shrinking rollout sizes and context, collocating actor and vLLM, and enabling CPU offload. It proves only execution feasibility. Formal Qwen2.5-3B rollout/update batching is frozen only after the resource pilot.
+
+## Promotion rule
+
+A stage may move from `smoke` to `formal` only when both are true:
+
+1. its algorithmic/method authority is closed; and
+2. target-hardware resource parameters have been measured and frozen without using the formal result to tune the acceptance rule.
+
+For RLVR, condition 1 is now closed by pinned upstream authority; condition 2 remains open until the RTX5090 pilot completes.
