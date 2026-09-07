@@ -31,6 +31,25 @@ def sha256(path: Path) -> str:
     return h.hexdigest()
 
 
+def load_existing_manifest(path: Path, split: str) -> dict:
+    if not path.exists():
+        return {
+            "schema_version": 3,
+            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+            "split": split,
+            "datasets": {},
+        }
+    payload = json.loads(path.read_text())
+    if not isinstance(payload, dict) or not isinstance(payload.get("datasets"), dict):
+        raise SystemExit(f"MANIFEST_INVALID: {path}")
+    existing_split = payload.get("split")
+    if existing_split not in (None, split):
+        raise SystemExit(f"MANIFEST_SPLIT_MISMATCH: existing={existing_split} requested={split}")
+    payload["schema_version"] = 3
+    payload["split"] = split
+    return payload
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", type=Path, required=True)
@@ -43,12 +62,8 @@ def main() -> int:
     stages = DATASETS if args.stage == "all" else {args.stage: DATASETS[args.stage]}
     args.root.mkdir(parents=True, exist_ok=True)
     api = HfApi()
-    manifest = {
-        "schema_version": 2,
-        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-        "split": args.split,
-        "datasets": {},
-    }
+    mf = args.root / "dataset_manifest.json"
+    manifest = load_existing_manifest(mf, args.split)
 
     for stage, hf_id in stages.items():
         info = api.dataset_info(hf_id, revision=args.revision)
@@ -63,6 +78,7 @@ def main() -> int:
             "hf_id": hf_id,
             "requested_revision": args.revision,
             "resolved_revision": resolved_revision,
+            "split": args.split,
             "local_path": str(out.resolve()),
             "num_rows": len(ds),
             "columns": list(ds.column_names),
@@ -72,8 +88,10 @@ def main() -> int:
         }
         print(f"[{stage}] rows={len(ds):,} sha256={manifest['datasets'][stage]['sha256']}")
 
-    mf = args.root / "dataset_manifest.json"
-    mf.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
+    manifest["timestamp_utc"] = datetime.now(timezone.utc).isoformat()
+    tmp = mf.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
+    tmp.replace(mf)
     print(mf.resolve())
     return 0
 

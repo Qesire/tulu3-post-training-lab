@@ -16,6 +16,7 @@ REPO_ROOT="${REPO_ROOT:-$PWD}"
 OPEN_INSTRUCT_ROOT="${OPEN_INSTRUCT_ROOT:-/home/scc/pb23061276/projects/tulu3-upstream/open-instruct-lecture6}"
 : "${SFT_CHECKPOINT_DIR:?set SFT_CHECKPOINT_DIR to a concrete SFT checkpoint/output}"
 : "${DPO_DATASET_FILE:?set DPO_DATASET_FILE to frozen local dpo.parquet}"
+DATASET_MANIFEST="${DATASET_MANIFEST:-$(dirname "$DPO_DATASET_FILE")/dataset_manifest.json}"
 PYTHON_BIN="${PYTHON_BIN:-$OPEN_INSTRUCT_ROOT/.venv/bin/python}"
 RUN_BASE="${RUN_BASE:-$REPO_ROOT/runs}"
 RUN_ROOT="$RUN_BASE/dpo_smoke_${SLURM_JOB_ID}"
@@ -41,23 +42,31 @@ PY
 trap on_exit EXIT
 
 [[ -x "$PYTHON_BIN" ]] || { echo "POSTTRAIN_PYTHON_MISSING=$PYTHON_BIN" >&2; exit 40; }
-EXPECTED_COMMIT="8fcf9c6bae3e3a58e1fcb8c79c3bbfbd97065377"
-ACTUAL_COMMIT="$(git -C "$OPEN_INSTRUCT_ROOT" rev-parse HEAD)"
-[[ "$ACTUAL_COMMIT" == "$EXPECTED_COMMIT" ]] || {
-  echo "OPEN_INSTRUCT_COMMIT_MISMATCH expected=$EXPECTED_COMMIT actual=$ACTUAL_COMMIT" >&2; exit 40;
-}
+[[ -f "$DATASET_MANIFEST" ]] || { echo "DATASET_MANIFEST_MISSING=$DATASET_MANIFEST" >&2; exit 40; }
+
+"$PYTHON_BIN" "$REPO_ROOT/scripts/preflight/validate_open_instruct_checkout.py" \
+  "$OPEN_INSTRUCT_ROOT" \
+  --expected-commit 8fcf9c6bae3e3a58e1fcb8c79c3bbfbd97065377 \
+  --output "$RUN_ROOT/audit/open_instruct_checkout.json"
 
 export RUNTIME_PROBE_OUT="$RUN_ROOT/audit/runtime.json"
 "$PYTHON_BIN" "$REPO_ROOT/scripts/preflight/runtime_probe.py"
 "$PYTHON_BIN" "$REPO_ROOT/scripts/preflight/validate_model_asset.py" \
   "$SFT_CHECKPOINT_DIR" --output "$RUN_ROOT/audit/sft_input_model.json"
 "$PYTHON_BIN" "$REPO_ROOT/scripts/preflight/validate_dataset_asset.py" \
-  "$DPO_DATASET_FILE" --max-rows 16 --output "$RUN_ROOT/audit/dpo_dataset.json"
+  "$DPO_DATASET_FILE" \
+  --max-rows 16 \
+  --binding-manifest "$DATASET_MANIFEST" \
+  --binding-stage dpo \
+  --output "$RUN_ROOT/audit/dpo_dataset.json"
+cp "$DATASET_MANIFEST" "$RUN_ROOT/audit/dataset_manifest.json"
 cp "$REPO_ROOT/configs/dpo/smoke_5090.yaml" "$RUN_ROOT/config/resolved_config.yaml"
 cp "$REPO_ROOT/configs/dpo/reference_tulu3_8b.yaml" "$RUN_ROOT/config/reference_tulu3_8b.yaml"
 cp "$REPO_ROOT/manifests/upstream.yaml" "$RUN_ROOT/audit/upstream.yaml"
+git -C "$REPO_ROOT" rev-parse HEAD > "$RUN_ROOT/audit/project_commit.txt"
 
-printf 'DPO_SMOKE_START=%s\nSFT_CHECKPOINT_DIR=%s\n' "$(date -Is)" "$SFT_CHECKPOINT_DIR"
+printf 'DPO_SMOKE_START=%s\nSFT_CHECKPOINT_DIR=%s\nDATASET_MANIFEST=%s\n' \
+  "$(date -Is)" "$SFT_CHECKPOINT_DIR" "$DATASET_MANIFEST"
 OPEN_INSTRUCT_ROOT="$OPEN_INSTRUCT_ROOT" \
 SFT_CHECKPOINT_DIR="$SFT_CHECKPOINT_DIR" \
 DATASET_REF="$DPO_DATASET_FILE" \
