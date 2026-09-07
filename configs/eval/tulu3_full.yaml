@@ -1,0 +1,16 @@
+schema_version: 1
+stage: evaluation
+profile: tulu3_full
+status: upstream_defined
+framework: olmes
+upstream_commit: f122a7bad99551ffb3f5feec14169af794926f6b
+model: null
+model_type: vllm
+model_path: null
+tasks:
+  - tulu_3_dev
+  - tulu_3_unseen
+batch_size: null
+max_model_length: 8192
+purpose: full_tulu3_lineage_evaluation
+claim_limit: formal_only_after_eval_runtime_and_dataset_cache_closure
