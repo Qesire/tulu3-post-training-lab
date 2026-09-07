@@ -1,0 +1,33 @@
+schema_version: 1
+stage: dpo
+profile: canonical_tulu3_8b_reference
+status: reference_only_requires_qwen3b_adaptation
+source: allenai/open-instruct:scripts/train/tulu3/dpo_8b.sh
+
+lineage:
+  input_stage: sft
+  input_checkpoint: null
+
+dataset:
+  hf_id: allenai/llama-3.1-tulu-3-8b-preference-mixture
+  weight: 1.0
+  local_path: null
+  revision: null
+
+reference_training:
+  max_seq_length: 2048
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 16
+  learning_rate: 5.0e-7
+  lr_scheduler_type: linear
+  warmup_ratio: 0.1
+  weight_decay: 0.0
+  num_epochs: 1
+  loss_type: dpo_norm
+  beta: 5
+  gradient_checkpointing: true
+  seed: 8
+
+method_note: >-
+  These values are pinned as the upstream Tulu3 8B DPO reference only.
+  They are not yet authorized as the Qwen2.5-3B formal DPO configuration.
