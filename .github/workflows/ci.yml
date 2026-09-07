@@ -23,6 +23,7 @@ jobs:
           python -m py_compile scripts/preflight/runtime_probe.py
           python -m py_compile scripts/preflight/validate_model_asset.py
           python -m py_compile scripts/preflight/validate_dataset_asset.py
+          python -m py_compile scripts/preflight/validate_open_instruct_checkout.py
       - name: Shell syntax
         run: |
           bash -n scripts/setup/bootstrap_open_instruct.sh

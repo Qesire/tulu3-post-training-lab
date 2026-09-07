@@ -16,6 +16,7 @@ REPO_ROOT="${REPO_ROOT:-$PWD}"
 OPEN_INSTRUCT_ROOT="${OPEN_INSTRUCT_ROOT:-/home/scc/pb23061276/projects/tulu3-upstream/open-instruct-lecture6}"
 : "${DPO_CHECKPOINT_DIR:?set DPO_CHECKPOINT_DIR to a concrete DPO checkpoint/output}"
 : "${RLVR_DATASET_FILE:?set RLVR_DATASET_FILE to frozen local rlvr.parquet}"
+DATASET_MANIFEST="${DATASET_MANIFEST:-$(dirname "$RLVR_DATASET_FILE")/dataset_manifest.json}"
 PYTHON_BIN="${PYTHON_BIN:-$OPEN_INSTRUCT_ROOT/.venv/bin/python}"
 RUN_BASE="${RUN_BASE:-$REPO_ROOT/runs}"
 RUN_ROOT="$RUN_BASE/rlvr_smoke_${SLURM_JOB_ID}"
@@ -41,6 +42,8 @@ PY
 trap on_exit EXIT
 
 [[ -x "$PYTHON_BIN" ]] || { echo "POSTTRAIN_PYTHON_MISSING=$PYTHON_BIN" >&2; exit 40; }
+[[ -f "$DATASET_MANIFEST" ]] || { echo "DATASET_MANIFEST_MISSING=$DATASET_MANIFEST" >&2; exit 40; }
+
 "$PYTHON_BIN" "$REPO_ROOT/scripts/preflight/validate_open_instruct_checkout.py" \
   "$OPEN_INSTRUCT_ROOT" \
   --expected-commit 8fcf9c6bae3e3a58e1fcb8c79c3bbfbd97065377 \
@@ -59,13 +62,17 @@ mkdir -p "$TRITON_CACHE_DIR" "$RAY_TMPDIR"
   "$RLVR_DATASET_FILE" \
   --max-rows 8 \
   --require-columns messages ground_truth dataset constraint_type constraint \
+  --binding-manifest "$DATASET_MANIFEST" \
+  --binding-stage rlvr \
   --output "$RUN_ROOT/audit/rlvr_dataset.json"
+cp "$DATASET_MANIFEST" "$RUN_ROOT/audit/dataset_manifest.json"
 cp "$REPO_ROOT/configs/rlvr/smoke_5090.yaml" "$RUN_ROOT/config/resolved_config.yaml"
 cp "$REPO_ROOT/configs/rlvr/reference_tulu3_8b_grpo.yaml" "$RUN_ROOT/config/reference_tulu3_8b_grpo.yaml"
 cp "$REPO_ROOT/manifests/upstream.yaml" "$RUN_ROOT/audit/upstream.yaml"
+git -C "$REPO_ROOT" rev-parse HEAD > "$RUN_ROOT/audit/project_commit.txt"
 
-printf 'RLVR_SMOKE_START=%s\nDPO_CHECKPOINT_DIR=%s\nRLVR_DATASET_FILE=%s\n' \
-  "$(date -Is)" "$DPO_CHECKPOINT_DIR" "$RLVR_DATASET_FILE"
+printf 'RLVR_SMOKE_START=%s\nDPO_CHECKPOINT_DIR=%s\nRLVR_DATASET_FILE=%s\nDATASET_MANIFEST=%s\n' \
+  "$(date -Is)" "$DPO_CHECKPOINT_DIR" "$RLVR_DATASET_FILE" "$DATASET_MANIFEST"
 
 OPEN_INSTRUCT_ROOT="$OPEN_INSTRUCT_ROOT" \
 PYTHON_BIN="$PYTHON_BIN" \
