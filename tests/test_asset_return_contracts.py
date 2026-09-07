@@ -20,6 +20,7 @@ def test_asset_closure_covers_model_all_datasets_and_upstream():
 def test_return_packet_excludes_checkpoints_by_default():
     body = text("scripts/collect/pack_run.py")
     assert 'DEFAULT_DIRS = ("audit", "config", "logs", "results", "scheduler")' in body
-    assert 'if args.include_checkpoints:' in body
+    assert 'if include_checkpoints:' in body
+    assert 'ap.add_argument("--include-checkpoints", action="store_true")' in body
     assert "RETURN_MANIFEST.json" in body
     assert "RETURN_PACKET_SHA256" in body
