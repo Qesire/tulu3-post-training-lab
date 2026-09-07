@@ -1,16 +1,36 @@
-schema_version: 1
+schema_version: 2
 stage: dpo
 profile: smoke_5090
-status: method_open
+status: executable_after_sft_checkpoint_and_runtime_preflight
+purpose: integration_smoke_only
+reference: configs/dpo/reference_tulu3_8b.yaml
+
 lineage:
   input_stage: sft
-  input_checkpoint: null
+  input_checkpoint: null   # must be supplied explicitly at runtime
 
 dataset:
   hf_id: allenai/llama-3.1-tulu-3-8b-preference-mixture
   local_path: null
   max_samples: 16
-method_binding:
-  reference: configs/dpo/reference_tulu3_8b.yaml
-  qwen2_5_3b_adaptation_frozen: false
-claim_limit: not_executable_until_method_frozen
+
+training:
+  precision: bf16
+  max_seq_length: 1024
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 1
+  learning_rate: 5.0e-7
+  max_steps: 2
+  dpo_loss_type: dpo_norm
+  dpo_beta: 5
+  use_flash_attn: true
+  gradient_checkpointing: true
+  concatenated_forward: false
+  seed: 8
+
+resource_note: >-
+  concatenated_forward is disabled only for the 32-GB 5090 integration smoke
+  because the pinned trainer explicitly documents this as a memory-saving
+  execution option. Formal DPO must be frozen separately after the pilot.
+
+claim_limit: runtime_path_only
