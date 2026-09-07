@@ -22,6 +22,12 @@ def main() -> int:
     ap.add_argument("dataset_file", type=Path)
     ap.add_argument("--output", type=Path, default=Path("dataset_asset.json"))
     ap.add_argument("--max-rows", type=int, default=None, help="Only affects validation load, not the file digest")
+    ap.add_argument(
+        "--require-columns",
+        nargs="*",
+        default=[],
+        help="Fail closed unless every named column is present in the materialized dataset.",
+    )
     args = ap.parse_args()
 
     path = args.dataset_file.resolve()
@@ -29,15 +35,21 @@ def main() -> int:
         raise SystemExit(f"DATASET_ASSET_INVALID: expected local .parquet file: {path}")
 
     ds = load_dataset("parquet", data_files=str(path), split="train")
+    columns = list(ds.column_names)
+    missing = sorted(set(args.require_columns) - set(columns))
+    if missing:
+        raise SystemExit(f"DATASET_SCHEMA_MISMATCH: missing required columns: {missing}; observed={columns}")
+
     if args.max_rows is not None:
         ds = ds.select(range(min(args.max_rows, len(ds))))
     payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "path": str(path),
         "size_bytes": path.stat().st_size,
         "sha256": sha256(path),
         "validated_rows": len(ds),
-        "columns": list(ds.column_names),
+        "columns": columns,
+        "required_columns": list(args.require_columns),
         "fingerprint": getattr(ds, "_fingerprint", None),
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)

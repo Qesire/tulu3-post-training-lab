@@ -73,7 +73,46 @@ def test_train_and_eval_upstreams_are_separate_and_pinned():
     assert cfg["policy"]["train_and_eval_virtualenvs_are_separate"] is True
 
 
-def test_rlvr_method_is_fail_closed():
+def test_rlvr_tutorial_gap_is_resolved_only_by_pinned_upstream_authority():
     cfg = load("configs/rlvr/reference_tutorial.yaml")
-    assert cfg["status"] == "method_open"
-    assert "algorithm" in cfg["method_open_fields"]
+    assert cfg["status"] == "tutorial_gap_closed_by_lecture_era_upstream"
+    assert cfg["known_from_tutorial"]["exact_rl_algorithm_present"] is False
+    assert cfg["upstream_resolution"]["algorithm"] == "grpo"
+    assert cfg["upstream_resolution"]["commit"] == "8fcf9c6bae3e3a58e1fcb8c79c3bbfbd97065377"
+    assert cfg["formal_qwen_status"]["status"] == "pilot_required"
+
+
+def test_rlvr_reference_matches_pinned_tulu3_grpo_script():
+    cfg = load("configs/rlvr/reference_tulu3_8b_grpo.yaml")
+    a = cfg["algorithm"]
+    t = cfg["reference_training"]
+    assert cfg["status"] == "reference_only_requires_qwen3b_formal_pilot"
+    assert cfg["source"]["script"] == "scripts/train/tulu3/grpo_8b.sh"
+    assert cfg["dataset"]["hf_id"] == "allenai/RLVR-GSM-MATH-IF-Mixed-Constraints"
+    assert cfg["lineage"]["reference_input_stage"] == "dpo"
+    assert a["name"] == "grpo"
+    assert a["verifiable_reward"] is True
+    assert a["beta"] == 0.01
+    assert a["kl_estimator"] == "kl3"
+    assert a["temperature"] == 1.0
+    assert t["number_samples_per_prompt"] == 16
+    assert t["learning_rate"] == 5e-7
+    assert t["total_episodes"] == 2_000_000
+    assert t["seed"] == 1
+
+
+def test_rlvr_smoke_is_single_gpu_bounded_and_not_formal():
+    cfg = load("configs/rlvr/smoke_5090.yaml")
+    s = cfg["smoke_shape"]
+    assert cfg["lineage"]["input_stage"] == "dpo"
+    assert cfg["method"]["algorithm"] == "grpo"
+    assert cfg["method"]["apply_verifiable_reward"] is True
+    assert s["single_gpu_mode"] is True
+    assert s["num_learners_per_node"] == [1]
+    assert s["vllm_num_engines"] == 1
+    assert s["num_unique_prompts_rollout"] == 2
+    assert s["num_samples_per_prompt_rollout"] == 2
+    assert s["total_episodes"] == 8
+    assert s["expected_training_steps"] == 2
+    assert s["deepspeed_offload_optimizer"] is True
+    assert cfg["claim_limit"] == "runtime_path_only"

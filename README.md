@@ -19,7 +19,7 @@ DPO (Tulu-3 preference mixture)
       │
       ├── E2: DPO benchmark
       ▼
-RLVR (RLVR GSM/MATH/IF mixed constraints)
+RLVR / GRPO (RLVR GSM/MATH/IF mixed constraints)
       │
       └── E3: RLVR benchmark
 ```
@@ -84,6 +84,31 @@ seed=8
 
 The project adaptation changes the lineage input to this project's SFT checkpoint. A 2-step DPO smoke exists to test that path; formal Qwen hyperparameters remain pilot-gated.
 
+### Lecture-era Tulu3 RLVR reference
+
+The tutorial itself gives the RLVR dataset/stage but not a complete trainer command. The pinned lecture-era Open-Instruct source closes this gap: `scripts/train/tulu3/grpo_8b.sh` uses the exact tutorial RLVR dataset, starts from a DPO checkpoint, runs GRPO, and enables verifiable reward.
+
+Frozen upstream-reference values include:
+
+```text
+algorithm=GRPO
+input=DPO checkpoint
+beta=0.01
+kl_estimator=kl3
+learning_rate=5e-7
+samples_per_prompt=16
+temperature=1.0
+max_prompt_length=2048
+response_length=2048
+total_episodes=2,000,000
+deepseed_stage=2
+seed=1
+verifiable_reward=true
+reward_model_multiplier=0.0
+```
+
+These are **lecture-era upstream-reference** values, not automatically the formal Qwen2.5-3B/1×5090 training recipe. A bounded 2-step GRPO smoke is provided to test the DPO→RLVR path on one RTX5090 using upstream `grpo_fast.py` single-GPU mode, reduced context/rollout size, and CPU offload.
+
 ## 3. Slurm target
 
 Known cluster target:
@@ -144,12 +169,15 @@ Smoke results must not be interpreted as scientific results.
 - [x] Executable 2-step SFT smoke launcher
 - [x] Exact lecture-era Tulu3 DPO reference config
 - [x] SFT-checkpoint-bound 2-step DPO smoke launcher
+- [x] Canonical lecture-era RLVR method resolved as GRPO from pinned upstream source
+- [x] DPO-checkpoint-bound single-5090 RLVR smoke launcher
 - [ ] Materialize/freeze dataset revisions and SHA256 on cluster
 - [ ] Validate dedicated Python 3.12/Open-Instruct environment on 5090
 - [ ] Run SFT smoke
 - [ ] Run DPO smoke after an SFT checkpoint exists
+- [ ] Run RLVR smoke after a DPO checkpoint exists
 - [ ] Freeze Qwen2.5-3B formal DPO after resource/method pilot
-- [ ] Freeze canonical RLVR algorithm/config
+- [ ] Freeze Qwen2.5-3B formal RLVR rollout/update shape after 5090 pilot
 - [ ] Run formal stage evaluations
 
 ## 8. First cluster command
@@ -190,3 +218,13 @@ SFT_CHECKPOINT_DIR=/absolute/path/to/sft/output \
 DPO_DATASET_FILE=/home/scc/pb23061276/projects/tulu3-data/dpo.parquet \
   sbatch scripts/slurm/20_dpo_smoke.sbatch
 ```
+
+After a concrete DPO model output is available, RLVR smoke is likewise lineage-bound:
+
+```bash
+DPO_CHECKPOINT_DIR=/absolute/path/to/dpo/output \
+RLVR_DATASET_FILE=/home/scc/pb23061276/projects/tulu3-data/rlvr.parquet \
+  sbatch scripts/slurm/40_rlvr_smoke.sbatch
+```
+
+The RLVR smoke validates the local dataset schema (`messages`, `ground_truth`, `dataset`, `constraint_type`, `constraint`) before entering the GPU-heavy GRPO path.
