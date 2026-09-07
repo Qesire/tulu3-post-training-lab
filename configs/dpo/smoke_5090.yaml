@@ -1,0 +1,16 @@
+schema_version: 1
+stage: dpo
+profile: smoke_5090
+status: method_open
+lineage:
+  input_stage: sft
+  input_checkpoint: null
+
+dataset:
+  hf_id: allenai/llama-3.1-tulu-3-8b-preference-mixture
+  local_path: null
+  max_samples: 16
+method_binding:
+  reference: configs/dpo/reference_tulu3_8b.yaml
+  qwen2_5_3b_adaptation_frozen: false
+claim_limit: not_executable_until_method_frozen
