@@ -30,6 +30,13 @@ command -v uv >/dev/null 2>&1 || { echo "UV_NOT_FOUND" >&2; exit 40; }
 "$OPEN_INSTRUCT_ROOT/.venv/bin/python" \
   "$REPO_ROOT/scripts/setup/apply_lecture6_open_instruct_patch.py" "$OPEN_INSTRUCT_ROOT"
 
+BOOTSTRAP_ATTESTATION="${TMPDIR:-/tmp}/tulu3_open_instruct_checkout_${USER:-user}.json"
+"$OPEN_INSTRUCT_ROOT/.venv/bin/python" \
+  "$REPO_ROOT/scripts/preflight/validate_open_instruct_checkout.py" \
+  "$OPEN_INSTRUCT_ROOT" \
+  --expected-commit "$OPEN_INSTRUCT_COMMIT" \
+  --output "$BOOTSTRAP_ATTESTATION"
+
 "$OPEN_INSTRUCT_ROOT/.venv/bin/python" - <<'PY'
 import sys
 import torch, transformers, flash_attn, accelerate, datasets
@@ -45,4 +52,5 @@ cat <<EOF
 OPEN_INSTRUCT_READY=1
 OPEN_INSTRUCT_ROOT=$OPEN_INSTRUCT_ROOT
 OPEN_INSTRUCT_COMMIT=$ACTUAL_COMMIT
+OPEN_INSTRUCT_ATTESTATION=$BOOTSTRAP_ATTESTATION
 EOF
