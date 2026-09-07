@@ -1,0 +1,44 @@
+schema_version: 1
+stage: sft
+profile: reference_lecture6
+status: reference_defined
+source: lecture6_tulu3_tutorial
+
+model:
+  config: configs/model/qwen2.5-3b.yaml
+
+dataset:
+  hf_id: allenai/tulu-3-sft-mixture
+  weight: 1.0
+  local_path: null
+  revision: null
+
+training:
+  precision: bf16
+  max_seq_length: 4096
+  preprocessing_num_workers: 16
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 8
+  learning_rate: 2.0e-5
+  lr_scheduler_type: linear
+  warmup_ratio: 0.03
+  weight_decay: 0.0
+  num_train_epochs: 2
+  gradient_checkpointing: true
+  seed: 42
+  use_flash_attn: true
+
+reference_parallelism:
+  num_machines: 1
+  num_processes: 4
+  nominal_effective_batch_size: 32
+
+tracking:
+  backend: wandb
+  project: tulu3-qwen2.5-3b
+  logging_steps: 10
+  authoritative_local_metrics: true
+
+checkpointing:
+  steps: epoch
+  keep_last_n_checkpoints: 3
