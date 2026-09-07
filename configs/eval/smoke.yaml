@@ -1,12 +1,20 @@
-schema_version: 1
+schema_version: 2
 stage: evaluation
 profile: smoke
-framework: olmes
-model: null
-model_type: vllm
+status: executable_after_olmes_preflight
+framework:
+  name: olmes
+  commit: f122a7bad99551ffb3f5feec14169af794926f6b
+model:
+  path: null   # supplied explicitly at runtime
+  model_type: vllm
 tasks:
   - mmlu::olmes
   - gsm8k::olmes
-batch_size: null
-max_model_length: 8192
-purpose: compare_base_sft_dpo_rlvr_lineage
+sampling:
+  limit_per_task: 16
+  random_subsample_seed: 42
+resources:
+  gpus: 1
+purpose: integration_check_for_base_sft_dpo_rlvr_lineage
+claim_limit: runtime_and_evaluation_path_only

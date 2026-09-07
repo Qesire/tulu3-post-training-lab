@@ -1,0 +1,18 @@
+schema_version: 1
+stage: evaluation
+profile: tutorial_initial
+status: tutorial_defined
+framework:
+  name: olmes
+  commit: f122a7bad99551ffb3f5feec14169af794926f6b
+model:
+  path: null
+  model_type: vllm
+tasks:
+  - mmlu::olmes
+  - gsm8k::olmes
+sampling:
+  limit_per_task: null
+resources:
+  gpus: 1
+purpose: full_initial_comparison_across_model_lineage

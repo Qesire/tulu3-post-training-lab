@@ -1,4 +1,4 @@
-schema_version: 1
+schema_version: 2
 frozen_at: 2026-09-07
 basis: lecture6_era
 upstreams:
@@ -20,9 +20,17 @@ upstreams:
     commit: f122a7bad99551ffb3f5feec14169af794926f6b
     commit_date_utc: 2025-11-20T09:20:38Z
     rationale: latest OLMES commit available before the tutorial's 2025-12-08 GPU-eval note
+    python_requirement: ">=3.10,<3.13"
+    observed_core_requirements:
+      torch: ">=2.8.0,<2.9"
+      transformers: ">=4.55.2,<=4.57.0"
+      lm_eval: "==0.4.3"
+      datasets: ">=3,<4"
+      vllm_gpu_extra: "==0.11.0"
 
 policy:
   mutate_upstream_in_place: false
   record_all_patches: true
   gpu_jobs_may_git_pull: false
   formal_jobs_require_pinned_checkout: true
+  train_and_eval_virtualenvs_are_separate: true
