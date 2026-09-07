@@ -1,7 +1,7 @@
-schema_version: 1
+schema_version: 2
 stage: rlvr
 profile: lecture6_reference
-status: method_open
+status: tutorial_gap_closed_by_lecture_era_upstream
 
 lineage:
   intended_input_stage: dpo
@@ -14,18 +14,28 @@ dataset:
 
 known_from_tutorial:
   purpose: reinforcement_learning_with_verifiable_rewards
+  complete_trainer_command_present: false
+  exact_rl_algorithm_present: false
 
-method_open_fields:
-  - algorithm
-  - rollout_backend
-  - verifier_contract
-  - reward_definition
-  - kl_or_beta
-  - sampling_temperature
-  - num_generations
-  - rollout_batch_size
-  - update_batch_size
-  - advantage_estimator
-  - optimizer_hyperparameters
+upstream_resolution:
+  authority: lecture_era_open_instruct
+  repository: allenai/open-instruct
+  commit: 8fcf9c6bae3e3a58e1fcb8c79c3bbfbd97065377
+  canonical_reference_config: configs/rlvr/reference_tulu3_8b_grpo.yaml
+  canonical_script: scripts/train/tulu3/grpo_8b.sh
+  algorithm: grpo
+  input_stage: dpo
+  dataset_matches_tutorial: true
+  apply_verifiable_reward: true
 
-claim_limit: dataset_and_stage_identity_only
+formal_qwen_status:
+  status: pilot_required
+  unresolved:
+    - final_resource_feasible_batch_and_rollout_shape
+    - full_training_duration
+    - whether_reference_8b_hyperparameters_transfer_without_change
+
+claim_limit: >-
+  The tutorial itself supplies only RLVR stage/dataset identity. The exact GRPO
+  method is authority from the pinned lecture-era Open-Instruct implementation;
+  formal Qwen2.5-3B resource hyperparameters remain pilot-gated.
